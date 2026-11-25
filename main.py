@@ -1,25 +1,35 @@
 #!/usr/bin/env python3
-"""Entry point: copy the finished front page to the grader's output.
+"""Ship the finished front page as the competition entry.
 
-The picture is drawn ahead of time by draw_front.py and shipped here
-as entry.png, so this program needs no network and always writes the
-same bytes. The grader sets MAKEFUN_OUTPUT_DIR; otherwise /output.
+draw_front.py renders the page once into entry.png next to this file.
+This entry point only places that finished picture where the grader
+looks: $MAKEFUN_OUTPUT_DIR, falling back to /output. No network, no
+re-rendering, so every run writes identical bytes.
 """
 
 import os
 import shutil
 from pathlib import Path
 
+SOURCE_NAME = "entry.png"
 
-def main() -> Path:
-    here = Path(__file__).resolve().parent
-    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
-    out_dir.mkdir(parents=True, exist_ok=True)
-    target = out_dir / "entry.png"
-    shutil.copyfile(here / "entry.png", target)
-    return target
+
+def output_directory() -> Path:
+    """Where the grader expects the entry picture."""
+    chosen = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
+    directory = Path(chosen)
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def ship() -> Path:
+    """Copy the rendered front page into the output directory."""
+    source = Path(__file__).resolve().parent / SOURCE_NAME
+    destination = output_directory() / SOURCE_NAME
+    shutil.copyfile(source, destination)
+    return destination
 
 
 if __name__ == "__main__":
-    written = main()
-    print(f"wrote {written} ({written.stat().st_size} bytes)")
+    placed = ship()
+    print(f"wrote {placed} ({placed.stat().st_size} bytes)")
